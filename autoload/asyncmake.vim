@@ -1,4 +1,13 @@
+" File: asyncmake.vim
 " Plugin to run make asynchronously and process the output in the background
+" Author: Yegappan Lakshmanan (yegappan AT yahoo DOT com)
+" Version: 1.0
+" Last Modified: March 9, 2018
+" =======================================================================
+
+" Line continuation used here
+let s:cpo_save = &cpo
+set cpo&vim
 
 let s:make_cmd = ''
 
@@ -78,3 +87,7 @@ function! asyncmake#AsyncMake(args)
     let s:make_dir = getcwd()
     let s:make_efm = &efm
 endfunction
+
+" restore 'cpo'
+let &cpo = s:cpo_save
+unlet s:cpo_save
