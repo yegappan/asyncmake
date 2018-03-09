@@ -1,0 +1,67 @@
+*asyncmake.txt*		Plugin for asynchronously running make
+
+Author: Yegappan Lakshmanan  (yegappan AT yahoo DOT com)
+For Vim version 8.0.1040 and above
+Last change: 2018 March 9
+
+1. Overview					|asyncmake-overview|
+2. Installation					|asyncmake-installation|
+3. Usage					|asyncmake-usage|
+
+==============================================================================
+1. Overview					*asyncmake-overview*
+
+The asyncmake plugin allows you to run make in the background. The make output
+is processed as it becomes available and added to a quickfix list. You can use
+the Vim quickfix commands to browse the output.
+
+This plugin will run only on Vim 8.0 (patch 1040) and above.
+
+==============================================================================
+2. Installation					*asyncmake-installation*
+
+You can use any one of the Vim plugin managers (dein.vim, pathogen, vam,
+vim-plug, volt, Vundle, etc.) to install and manage this plugin.
+
+Alternatively, you can also manually download and install the plugin.
+To manually install the plugin, download and install the following files in
+the $HOME/.vim or $HOME/vimfiles directory:
+
+	plugin/asyncmake.vim - async make command definitions
+	autoload/asyncmake.vim - autoloaded async make plugin file
+	doc/asyncmake.txt    - documentation (help) file
+
+To uninstall the asyncmake plugin, either use the uninstall command provided
+by the plugin manager or manually remove the plugin/asyncmake.vim,
+autoload/asyncmake.vim and doc/asyncmake.txt files from the $HOME/.vim or
+$HOME/vimfiles directory.
+
+==============================================================================
+3. Usage					*asyncmake-usage*
+
+To start make in the background, run the following command:
+>
+	:AsyncMake
+<
+This invokes the program set in the 'makeprg' option in the background. The
+results are processed and added to a quickfix list. Only one instance of the
+make command can be run in the background at a time. Arguments passed to the
+":AsyncMake" command will be passed on to the external make command:
+>
+	:AsyncMake -f SomeMake.mak
+<
+To display the status of the currently running make command, use the
+following command:
+>
+	:AsyncMakeShow
+<
+To cancel the currently running make command, use the following command:
+>
+	:AsyncMakeStop
+<
+When a make is running in the background, if you quit Vim, then the make
+process will be terminated.
+
+==============================================================================
+
+vim:tw=78:ts=8:noet:ft=help:
