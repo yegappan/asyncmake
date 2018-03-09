@@ -7,17 +7,18 @@ let s:make_cmd = ''
 function! s:ProcessMakeOutput(qfid, channel, msg)
     " Make sure the quickfix list is still present
     let l = getqflist({'id' : a:qfid})
-    if empty(l)
+    if l.id != a:qfid
 	echomsg "Quickfix list not found, stopping the make"
 	call job_stop(ch_getjob(a:channel))
 	return
     endif
 
-    " As the user or some other plugin might have changed the directory,
+    " The user or some other plugin might have changed the directory,
     " change to the original direcotry of the make command.
     exe 'lcd ' . s:make_dir
-    call setqflist([], 'a', {'id':a:qfid, 'lines' : split(a:msg, "\n"),
-					\ 'efm' : s:make_efm})
+    call setqflist([], 'a', {'id':a:qfid,
+		\ 'lines' : split(a:msg, "\n"),
+		\ 'efm' : s:make_efm})
     lcd -
 endfunction
 
@@ -61,7 +62,8 @@ function! asyncmake#AsyncMake(args)
     endif
 
     " Create a new quickfix list at the end of the stack
-    call setqflist([], ' ', {'nr' : '$', 'title' : s:make_cmd,
+    call setqflist([], ' ', {'nr' : '$',
+		\ 'title' : s:make_cmd,
 		\ 'lines' : ['Make command (' . s:make_cmd . ') output']})
     let qfid = getqflist({'nr':'$', 'id':0}).id
 
