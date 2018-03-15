@@ -2,7 +2,7 @@
 " Plugin to run make asynchronously and process the output in the background
 " Author: Yegappan Lakshmanan (yegappan AT yahoo DOT com)
 " Version: 1.0
-" Last Modified: March 10, 2018
+" Last Modified: March 15, 2018
 " =======================================================================
 
 " Line continuation used here
@@ -91,9 +91,16 @@ function! asyncmake#AsyncMake(args)
 
     let s:make_cmd = &makeprg
 
-    if a:args != ''
-	let s:make_cmd = s:make_cmd . ' ' . a:args
+    " Replace $* (if present) in 'makeprg' with the supplied arguments
+    if match(s:make_cmd, '$\*') != -1
+	let s:make_cmd = substitute(s:make_cmd, '$\*', a:args, 'g')
+    else
+	if a:args != ''
+	    let s:make_cmd = s:make_cmd . ' ' . a:args
+	endif
     endif
+
+    " TODO: Need to expand %, #, %<, etc.
 
     " Create a new quickfix list at the end of the stack
     call setqflist([], ' ', {'nr' : '$',
@@ -104,7 +111,8 @@ function! asyncmake#AsyncMake(args)
     let s:make_job = job_start(s:make_cmd, {
 		\ 'callback' : function('s:MakeProcessOutput', [qfid]),
 		\ 'close_cb' : function('s:MakeCloseCb', [qfid]),
-		\ 'exit_cb' : function('s:MakeCompleted')})
+		\ 'exit_cb' : function('s:MakeCompleted'),
+		\ 'in_io' : 'null'})
     if job_status(s:make_job) == "fail"
         call s:warnMsg('Error: Failed to run (' . s:make_cmd . ')')
 	let s:make_cmd = ''
