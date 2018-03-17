@@ -2,7 +2,7 @@
 " Plugin to run make asynchronously and process the output in the background
 " Author: Yegappan Lakshmanan (yegappan AT yahoo DOT com)
 " Version: 1.0
-" Last Modified: March 15, 2018
+" Last Modified: March 17, 2018
 " =======================================================================
 
 " Line continuation used here
@@ -46,12 +46,30 @@ function! s:MakeCloseCb(qf_id, channel)
 	call s:warnMsg('Error: Job not found in make channel close callback')
 	return
     endif
-    let emsg = '[Make command exited with status ' . job_info(job).exitval . ']'
+    let exitval = job_info(job).exitval
+    let emsg = '[Make command exited with status ' . exitval . ']'
 
     " Add the exit status message if the quickfix list is still present
     let l = getqflist({'id' : a:qf_id})
     if has_key(l, 'id') && l.id == a:qf_id
 	call setqflist([], 'a', {'id' : a:qf_id, 'lines' : [emsg]})
+
+	" Open the quickfix list if make exited with a non-zero value
+	if exitval != 0
+	    let save_wid = win_getid()
+	    copen
+	    " Jump to the correct quickfix list
+	    let cur_qfnr = getqflist({'nr' : 0}).nr
+	    let tgt_qfnr = getqflist({'id' : a:qf_id, 'nr' : 0}).nr
+	    if cur_qfnr != tgt_qfnr
+		if tgt_qfnr > cur_qfnr
+		    exe 'cnewer ' . (tgt_qfnr - cur_qfnr)
+		else
+		    exe 'colder ' . (cur_qfnr - tgt_qfnr)
+		endif
+	    endif
+	    call win_gotoid(save_wid)
+	endif
     endif
 endfunction
 
@@ -81,6 +99,23 @@ function! asyncmake#ShowMake()
     echo "Make command (" . s:make_cmd . ") is running"
 endfunction
 
+" expand_cmd_special()
+" Expand special characters in the command line (:help cmdline-special)
+" Leveraged from the dispatch.vim plugin
+let s:flags = '<\=\%(:[p8~.htre]\|:g\=s\(.\).\{-\}\1.\{-\}\1\)*'
+let s:expandable = '\\*\%(<\w\+>\|%\|#\d*\)' . s:flags
+function! s:expand_cmd_special(string)
+  return substitute(a:string, s:expandable, '\=s:expand(submatch(0))', 'g')
+endfunction
+
+function! s:expand(string)
+  " Backslashes in 'makeprg' are escaped twice. Refer to :help 'makeprg'
+  " for details. Reduce the number of backslashes by two.
+  let slashes = len(matchstr(a:string, '^\%(\\\\\)*'))
+  sandbox let v = repeat('\', slashes/2) . expand(a:string[slashes : -1])
+  return v
+endfunction
+
 " Run a make command and process the output asynchronously.
 " Only one make command can be run in the background.
 function! asyncmake#AsyncMake(args)
@@ -92,15 +127,21 @@ function! asyncmake#AsyncMake(args)
     let s:make_cmd = &makeprg
 
     " Replace $* (if present) in 'makeprg' with the supplied arguments
-    if match(s:make_cmd, '$\*') != -1
-	let s:make_cmd = substitute(s:make_cmd, '$\*', a:args, 'g')
+    if match(s:make_cmd, '\$\*') != -1
+	let s:make_cmd = substitute(s:make_cmd, '\$\*', a:args, 'g')
     else
 	if a:args != ''
 	    let s:make_cmd = s:make_cmd . ' ' . a:args
 	endif
     endif
 
-    " TODO: Need to expand %, #, %<, etc.
+    " Replace cmdline-special characters
+    let s:make_cmd = s:expand_cmd_special(s:make_cmd)
+
+    " Save all the modified buffers if 'autowrite' or 'autowriteall' is set
+    if &autowrite || &autowriteall
+	silent! wall
+    endif
 
     " Create a new quickfix list at the end of the stack
     call setqflist([], ' ', {'nr' : '$',

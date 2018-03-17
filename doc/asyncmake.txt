@@ -2,7 +2,7 @@
 
 Author: Yegappan Lakshmanan  (yegappan AT yahoo DOT com)
 For Vim version 8.0.1040 and above
-Last change: 2018 March 9
+Last change: March 17, 2018
 
 1. Overview					|asyncmake-overview|
 2. Installation					|asyncmake-installation|
@@ -61,6 +61,10 @@ To cancel the currently running make command, use the following command:
 <
 When a make is running in the background, if you quit Vim, then the make
 process will be terminated.
+
+The output from the make command is added to a quickfix list. You can use the
+quickfix commands to browse the output. If the make command exits with an
+error code, then the quickfix window is automatically opened.
 
 ==============================================================================
 
