@@ -102,7 +102,7 @@ endfunction
 " expand_cmd_special()
 " Expand special characters in the command line (:help cmdline-special)
 " Leveraged from the dispatch.vim plugin
-let s:flags = '<\=\%(:[p8~.htre]\|:g\=s\(.\).\{-\}\1.\{-\}\1\)*'
+let s:flags = '<\=\%(:[p8~.htre]\|:g\=s\(.\).\{-\}\1.\{-\}\1\)*\%(:S\)\='
 let s:expandable = '\\*\%(<\w\+>\|%\|#\d*\)' . s:flags
 function! s:expand_cmd_special(string)
   return substitute(a:string, s:expandable, '\=s:expand(submatch(0))', 'g')
@@ -149,7 +149,7 @@ function! asyncmake#AsyncMake(args)
 		\ 'lines' : ['Make command (' . s:make_cmd . ') output']})
     let qfid = getqflist({'nr':'$', 'id':0}).id
 
-    let s:make_job = job_start(s:make_cmd, {
+    let s:make_job = job_start(['/bin/sh', '-c', s:make_cmd], {
 		\ 'callback' : function('s:MakeProcessOutput', [qfid]),
 		\ 'close_cb' : function('s:MakeCloseCb', [qfid]),
 		\ 'exit_cb' : function('s:MakeCompleted'),
